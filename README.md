@@ -1,11 +1,12 @@
 # Myblog Code Examples.  
 
-This is the code repository for [Wyther's blog Posts](https://wytheryang.com), published by Wyther.  
+This is the code repository for [Wyther's Blog Posts](https://wytheryang.com), published by Wyther.  
 
 ## Instructions and Navigations  
 
 All of the code is organized into folders. For example,  
-the code referred to in https://wytherblog.top/en/docs/C++/Unreal/hello-world is listed in the folder, C++/Unreal/hello-world/.  
+
+the code referred to in https://wytherblog.top/en/docs/C++/Unreal/hello-world is listed in the folder, [C++/Unreal/hello-world/](./C++/Unreal/hello-world/)  
 
 ## Contributing  
 
