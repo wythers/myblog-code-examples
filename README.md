@@ -1,6 +1,6 @@
 # Myblog Code Examples.  
 
-This is the code repository for [Wyther's Blog Posts](https://wytheryang.com), published by Wyther.  
+This is the code repository for [Wyther's Blog Posts](https://wytherblog.top), published by Wyther.  
 
 ## Instructions and Navigations  
 
