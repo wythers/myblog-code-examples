@@ -6,7 +6,11 @@
 #include <sstream>
 #include <iomanip>
 
-template<IsWriter T>
+// e.g: std::pow(2, 10)
+template<int N>
+concept IsBaseTwo = (N-1)&N ? false : true; 
+
+template<IsWriter T, IsBaseTwo CAP = 0>
 class Logger {
         using loggingType = logging<T>;
         using HeaderWithCS = typename logging<T>::HeaderWithCS;
@@ -15,10 +19,9 @@ class Logger {
 public:
         Logger(
                 std::string name,
-                int size = sysconf(_SC_PAGESIZE),
                 auto&&... args) : m_name(std::move(name)), m_writer(new T(std::forward<decltype(args)>(args)...)) {
 
-                m_task = new logging{m_name + "-slave", size, m_writer};
+                m_task = new logging{m_name + "-slave", CAP == 0 ? (int)sysconf(_SC_PAGESIZE) : CAP, m_writer};
                 gFarm->Add(m_task);
         }
 
@@ -50,7 +53,7 @@ public:
                 std::stringstream buf{};     
                 buf.setf(std::ios::fixed);
                 expand(buf, format, std::move(args)...);
-                
+
                 m_writer->Write(std::move(buf).str());
         }
 
@@ -88,6 +91,8 @@ private:
                         s++;
                 }
         }
+
+
 
 private:
         std::string m_name{};

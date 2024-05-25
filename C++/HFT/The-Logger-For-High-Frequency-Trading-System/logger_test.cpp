@@ -19,9 +19,9 @@ struct Mock {
 int main() {
         farmInit(cpus{2}, cpuIDs{0, 1}, cpuIDs{1, 2});
 
-        Logger<Mock> logger{"logger#1", 2};
+        Logger<Mock, 2> logger{"logger#1"};
         std::thread th1([&]{
-                Logger<Mock> logger{"logger#2", 1024};
+                Logger<Mock, 1024> logger{"logger#2"};
                 logger.log(format, "9999", "AAAAA", "9999", "13.5", 100000, system_clock::now(), "buy");
                 logger.log(format, "9999", "AAAAA", "9999", "13.5", 100000, system_clock::now(), "buy");
                 logger.log(format, "9999", "AAAAA", "9999", "13.5", 100000, system_clock::now(), "buy");
