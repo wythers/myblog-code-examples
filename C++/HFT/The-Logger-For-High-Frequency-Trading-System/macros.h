@@ -2,8 +2,10 @@
 
 #include <iostream>
 #include <mutex>
-
+#include <vector>
 #include <sstream>
+
+#include <string.h>
 
 inline static std::mutex mtx{};
 
@@ -11,7 +13,6 @@ inline auto ASSERT(bool cond, char const* msg) -> void {
         using namespace std;
 
         if (!cond) [[unlikely]] {
-//                cerr << "ASSERT: " << msg << endl;
                 fprintf(stderr, "ASSERT: %s\n", msg);
                 exit(EXIT_FAILURE);
         }
@@ -74,10 +75,25 @@ public:
                 for (auto i : cs) {
                         ss << "core:" << i << " ";
                 }
+                
                 return ss.str();
         }
 
         std::vector<int> cs{};
+};
+
+
+namespace std {
+        template<typename _Traits>
+        inline basic_ostream<char, _Traits>&
+        operator<<(basic_ostream<char, _Traits>& out, chrono::_V2::system_clock::time_point tp) {
+                char stamp[26]{};
+                time_t tm{std::chrono::system_clock::to_time_t(tp)};
+                ctime_r(&tm, stamp);
+                stamp[strlen(stamp)-1] = '\0';
+
+                return out << stamp;
+        }
 };
 
 #define __ROTATION std::this_thread::yield();

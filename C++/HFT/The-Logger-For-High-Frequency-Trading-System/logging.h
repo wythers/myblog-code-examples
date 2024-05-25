@@ -6,6 +6,12 @@
 #include <chrono>
 #include <cstring>
 
+template<typename T>
+concept IsWriter = requires(T w, std::string s) {
+        { w.Write(s) };
+};
+
+template <IsWriter T>
 class logging : public farming {
 public:
         enum class LogType : int8_t {
@@ -45,7 +51,10 @@ public:
                 } u{};
         };
         
-        logging(std::string name_, FILE* f_, std::mutex* m_, int size): farming(&log), m_q{size}, m_name(std::move(name_)), fd(f_), mtx(m_) {}
+        logging(std::string name_,
+                int size,
+                T* writer)
+        :farming(&log), m_q{size}, m_name(std::move(name_)), m_writer(writer) {}
 
         auto close() noexcept -> void {
                 is_closed.store(true, std::memory_order_relaxed);
@@ -102,6 +111,15 @@ public:
         static auto encode(std::string&& s) noexcept {
                 std::string* sp = new std::string{std::move(s)};
                 return Block{LogType::STD_STRING_POINTER, {.s = sp}};
+        }
+
+        static auto encode(std::chrono::_V2::system_clock::time_point tp) noexcept {
+                char stamp[26]{};
+                time_t tm{std::chrono::system_clock::to_time_t(tp)};
+                ctime_r(&tm, stamp);
+                stamp[strlen(stamp)-1] = '\0';
+
+                return encode(std::string{stamp});
         }
 
         struct HeaderWithCS {
@@ -166,70 +184,65 @@ private:
 
                 char const* s = buf[begin].u.cs;
                 begin = (begin+1)&mod;
-                
-                auto tp = std::chrono::system_clock::now();
-                char stamp[26]{};
-                time_t tm{std::chrono::system_clock::to_time_t(tp)};
-                ctime_r(&tm, stamp);
-                stamp[strlen(stamp)-1] = '\0';
 
-                std::lock_guard<std::mutex> locked{*mtx};
-                fprintf(fd, "[%s] %s: ", stamp, m_name.c_str());
+                
+                std::stringstream ss{}; 
                 while (*s) {
                         if (*s == '%') [[unlikely]] {
                                 if (*(s+1) == '%') [[unlikely]] {
                                         s++;
                                 } else {
                                         if (buf[begin].type != LogType::END) [[likely]] {
-                                                decode(buf[begin]);
+                                                decode(ss, buf[begin]);
                                                 begin = (begin+1)&mod;
                                         }
                                         s++;
                                         continue;
                                 }
                         }
-                        fprintf(fd, "%c", *s);
+                        ss << *s;
                         s++;
                 }
-                fflush(fd);
+
+                m_writer->Write(std::move(ss).str());
         }
 
 
-        auto decode(Block const& block) noexcept -> void {
+        auto decode(std::stringstream& buf, Block const& block) noexcept -> void {
 //                std::lock_guard<std::mutex> locked{mtx};
                 switch (block.type) {
                         case LogType::CHAR:
-                                fprintf(fd, "%c", block.u.c);
+                                buf << block.u.c;
                                 break;
                         case LogType::INTEGER:
-                                fprintf(fd, "%d", block.u.i);
+                                buf << block.u.i;
                                 break;
                         case LogType::LONG_INTEGER:
-                                fprintf(fd, "%ld", block.u.l);
+                                buf << block.u.l;
                                 break;
                         case LogType::LONG_LONG_INTEGER:
-                                fprintf(fd, "%lld", block.u.ll);
+                                buf << block.u.ll;
                                 break;
                         case LogType::UNSIGNED_INTEGER:
-                                fprintf(fd, "%u", block.u.u);
+                                buf << block.u.u;
                                 break;
                         case LogType::UNSIGNED_LONG_INTEGER:
-                                fprintf(fd, "%lu", block.u.ul);
+                                buf << block.u.ul;
                                 break;
                         case LogType::UNSIGNED_LONG_LONG_INTEGER:
-                                fprintf(fd, "%llu", block.u.ull);
+                                buf << block.u.ull;
                                 break;
                         case LogType::FLOAT:
-                                fprintf(fd, "%.6f", block.u.f);
+                                buf << block.u.f;
                                 break;
                         case LogType::DOUBLE:
-                                fprintf(fd, "%.6lf", block.u.d);
+                                buf << block.u.d;
                                 break;
                         case LogType::CHAR_CONST_POINTER:
-                                fprintf(fd, "%s", block.u.cs);
+                                buf << block.u.cs;
                                 break;
                         case LogType::STD_STRING_POINTER:
-                                fprintf(fd, "%s", block.u.s->c_str());
+                                buf << *(block.u.s);
                                 std::unique_ptr<std::string> cleanup{block.u.s};
                 }
         }
@@ -240,6 +253,5 @@ private:
 
         std::string m_name{};
 
-        FILE* fd{};
-        std::mutex* mtx{};
+        std::unique_ptr<T> m_writer{};
 };

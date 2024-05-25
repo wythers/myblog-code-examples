@@ -1,16 +1,12 @@
 #pragma once
 
 #include "farm.h"
-#include "db.h"
 #include "macros.h"
 
 #include <signal.h>
 #include <fstream>
 #include <dlfcn.h>
 #include <string.h>
-
-// file_db env
-static inline fileDB glog_file_db{};
 
 // farm env
 inline static std::unique_ptr<Farm<farming*>> gFarm{};

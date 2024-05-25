@@ -1,4 +1,3 @@
-
 main: test_logger
 	./test_logger
 
