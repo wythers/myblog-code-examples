@@ -11,7 +11,7 @@
 // farm env
 inline static std::unique_ptr<Farm<farming*>> gFarm{};
 
-inline auto farmInit(cpus n, cpuIDs c1, auto... cs) noexcept(false) -> void {
+inline auto farmInit(int n, cpuIDs c1, auto... cs) noexcept(false) -> void {
         struct farmInitException final : std::exception {
                 const char* what() const noexcept override {
                         return "farmInitException";

@@ -17,7 +17,8 @@ concept IsLogger = requires(T l, char const* format) {
 };
 
 template<IsLogger T>
-struct Logger {
+class Logger {
+public:
         Logger(auto&&... args) : m_log(std::forward<decltype(args)>(args)...) {}
 
         auto log(char const* format, auto&&... args) -> void {
@@ -27,7 +28,7 @@ struct Logger {
         ~Logger() {
                 m_log.close();
         }
-
+private:
         T m_log{};
 };
 

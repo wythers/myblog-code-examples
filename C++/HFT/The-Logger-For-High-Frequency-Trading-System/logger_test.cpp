@@ -24,7 +24,7 @@ struct Mock {
 };
 
 int main() {
-        farmInit(cpus{2}, cpuIDs{0, 1}, cpuIDs{1, 2});
+        farmInit(2, cpuIDs{0, 1}, cpuIDs{1, 2});
 
         Logger<Log<Mock, 2>> logger{"logger#1"};
         std::thread th1([&]{
