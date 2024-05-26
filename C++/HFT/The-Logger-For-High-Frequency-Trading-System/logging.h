@@ -8,7 +8,7 @@
 
 template<typename T>
 concept IsWriter = requires(T w, std::string s) {
-        { w.Write(s) };
+        { w.write(s) } -> size_t;
 };
 
 template <IsWriter T>
@@ -204,7 +204,7 @@ private:
                         s++;
                 }
 
-                m_writer->Write(std::move(ss).str());
+                m_writer->write(std::move(ss).str());
         }
 
 

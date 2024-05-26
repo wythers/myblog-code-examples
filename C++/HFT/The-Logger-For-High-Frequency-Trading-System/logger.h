@@ -4,20 +4,41 @@
 #include "logging.h"
 
 #include <sstream>
+#include <utility>
 #include <iomanip>
 
 // e.g: std::pow(2, 10)
 template<int N>
 concept IsBaseTwo = (N-1)&N ? false : true; 
 
+template<typename T>
+concept IsLogger = requires(T l, char const* format) {
+        { l.log(format) } -> void;
+};
+
+template<IsLogger T>
+struct Logger {
+        Logger(auto&&... args) : m_log(std::forward<decltype(args)>(args)...) {}
+
+        auto log(char const* format, auto&&... args) -> void {
+                m_log.log(format, std::forward<decltype(args)>(args)...);
+        }
+
+        ~Logger() {
+                m_log.close();
+        }
+
+        T m_log{};
+};
+
 template<IsWriter T, IsBaseTwo CAP = 0>
-class Logger {
+class Log {
         using loggingType = logging<T>;
         using HeaderWithCS = typename logging<T>::HeaderWithCS;
         using tailer = typename logging<T>::tailer;
 
 public:
-        Logger(
+        Log(
                 std::string name,
                 auto&&... args) : m_name(std::move(name)), m_writer(new T(std::forward<decltype(args)>(args)...)) {
 
@@ -54,10 +75,10 @@ public:
                 buf.setf(std::ios::fixed);
                 expand(buf, format, std::move(args)...);
 
-                m_writer->Write(std::move(buf).str());
+                m_writer->write(std::move(buf).str());
         }
 
-        ~Logger() {
+        ~Log() {
                 if (m_task) {
                         m_task->close();
                 }
