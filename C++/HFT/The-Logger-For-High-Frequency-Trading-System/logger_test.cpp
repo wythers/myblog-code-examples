@@ -1,19 +1,26 @@
 #include "logger.h"
 
+#include <stdio.h>
+
 using std::chrono::system_clock;
 
 static char const* format = R"({"OrderId":"%","ClientId":"%","TickerId":"%","Price":"%$","Qty":%,"When":"%","Side":"%"}
 )";
 
-// mock to display the record logged in the terminal
-// 在终端上显示日志
+// mock to output the records to the mock.log file
+// 在mock.log文件中记录日志.
 struct Mock {
+        struct Records {
+                Records(char const* name) : f(fopen(name, "a")) {}
+                FILE* f{};
+        };
+
         auto Write(std::string str) -> size_t {
-                // locked for using the stdout
-                std::lock_guard locked{mtx};
-                std::cout << str;
+                fprintf(records.f, str.c_str());
                 return str.size();
         }
+
+        static inline Records records{"mock.log"};
 };
 
 int main() {
